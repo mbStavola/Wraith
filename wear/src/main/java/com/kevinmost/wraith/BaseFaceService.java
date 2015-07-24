@@ -11,11 +11,16 @@ import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
+import com.kevinmost.wraith.hand.WraithHand;
+import com.kevinmost.wraith.task.LoadCalendarEventsTask;
 
 import java.util.Calendar;
 import java.util.TimeZone;
 
 public abstract class BaseFaceService extends CanvasWatchFaceService {
+  protected static final int MSG_UPDATE_TIME = 0;
+  protected static final int MSG_LOAD_CALENDAR_EVENTS = 1;
+
   @Override
   public Engine onCreateEngine() {
     return new Engine();
@@ -25,18 +30,25 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
     protected boolean isLowBitAmbient;
     protected boolean hasBurnInProtection;
 
-    private static final int MSG_UPDATE_TIME = 0;
+    private LoadCalendarEventsTask loadCalendarEventsTask;
 
     protected Calendar calendar;
 
-    private final Handler updateTimeHandler = new Handler() {
+    protected final Handler updateHandler = new Handler() {
       @Override
       public void handleMessage(Message msg) {
-        if (msg.what == MSG_UPDATE_TIME) {
-          invalidate();
-          if (shouldTimerBeRunning()) {
-            sendEmptyMessageDelayed(MSG_UPDATE_TIME, 1000);
-          }
+        switch (msg.what) {
+          case MSG_UPDATE_TIME:
+            invalidate();
+            if (shouldTimerBeRunning()) {
+              sendEmptyMessageDelayed(MSG_UPDATE_TIME, 1000);
+            }
+            break;
+          case MSG_LOAD_CALENDAR_EVENTS:
+            loadCalendarEventsTask.cancel(true);
+            loadCalendarEventsTask = new LoadCalendarEventsTask(getApplicationContext());
+            loadCalendarEventsTask.execute();
+            break;
         }
       }
     };
@@ -79,6 +91,18 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
     }
 
     @Override
+    public void onAmbientModeChanged(boolean inAmbientMode) {
+      super.onAmbientModeChanged(inAmbientMode);
+      if (isLowBitAmbient) {
+        final boolean antiAlias = !inAmbientMode;
+        WraithHand.HOUR.getPaint().setAntiAlias(antiAlias);
+        WraithHand.MINUTE.getPaint().setAntiAlias(antiAlias);
+      }
+      invalidate();
+      updateTimer();
+    }
+
+    @Override
     public void onTimeTick() {
       super.onTimeTick();
       invalidate();
@@ -96,10 +120,10 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
       updateTimer();
     }
 
-    protected void updateTimer() {
-      updateTimeHandler.removeMessages(MSG_UPDATE_TIME);
+    private void updateTimer() {
+      updateHandler.removeMessages(MSG_UPDATE_TIME);
       if (shouldTimerBeRunning()) {
-        updateTimeHandler.sendEmptyMessage(MSG_UPDATE_TIME);
+        updateHandler.sendEmptyMessage(MSG_UPDATE_TIME);
       }
     }
 
