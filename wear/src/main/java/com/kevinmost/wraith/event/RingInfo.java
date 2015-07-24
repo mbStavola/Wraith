@@ -14,7 +14,7 @@ public class RingInfo implements IRingInfo {
   private static void mergeOverlappingEvents(List<Event> events) {
     for (int i = 0; i < events.size(); i++) {
       // If the next event starts before this one ends...
-      while (events.get(i).end >= events.get(i + 1).start) {
+      while (i < events.size() - 1 && events.get(i).end >= events.get(i + 1).start) {
         // ... merge the two by setting this event's end time to the next event's end time...
         events.get(i).end = Math.max(events.get(i).end, events.get(i + 1).end);
         // ... and then remove the (now "eaten up") 2nd event
