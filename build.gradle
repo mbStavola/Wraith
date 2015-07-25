@@ -15,6 +15,17 @@ buildscript {
 ext {
   butterknifeVersion = '7.0.0'
   daggerVersion = '1.2.2'
+
+  supportAnnotationsVersion = "22.2.0"
+
+  jodaTimeVersion = "2.8.1"
+
+  buildToolsVersion = "22.0.1"
+  compileSdkVersion = 22
+  targetSdkVersion = 22
+  versionCode = 1
+  versionName = "1.0"
+
 }
 
 allprojects {

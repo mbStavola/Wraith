@@ -33,7 +33,7 @@ public class LoadCalendarEventsTask extends AsyncTask<Void, Void, List<Event>> {
     final long begin = System.currentTimeMillis();
     final Uri.Builder builder = WearableCalendarContract.Instances.CONTENT_URI.buildUpon();
     ContentUris.appendId(builder, begin);
-    ContentUris.appendId(builder, begin + DateUtils.DAY_IN_MILLIS);
+    ContentUris.appendId(builder, begin + DateUtils.DAY_IN_MILLIS / 2);
     final Cursor cursor = contentResolver.query(builder.build(),
         DESIRED_CALENDAR_COLUMNS,
         null,

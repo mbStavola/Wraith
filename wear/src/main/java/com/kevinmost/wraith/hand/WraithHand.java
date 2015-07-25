@@ -9,7 +9,7 @@ public enum WraithHand implements IWraithHand {
     protected Paint vendPaint() {
       final Paint paint = new Paint();
       paint.setARGB(255, 255, 255, 255);
-      paint.setStrokeWidth(4);
+      paint.setStrokeWidth(6);
       paint.setStrokeCap(Paint.Cap.ROUND);
       paint.setAntiAlias(true);
       return paint;

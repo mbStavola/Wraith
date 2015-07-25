@@ -3,8 +3,12 @@ package com.kevinmost.wraith;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.util.Log;
+import com.kevinmost.wraith.event.IRingInfo;
+import com.kevinmost.wraith.event.RingInfo;
 import com.kevinmost.wraith.hand.WraithHand;
 import com.kevinmost.wraith.event.Event;
+import com.kevinmost.wraith.ring.WraithRing;
 
 import java.util.Calendar;
 import java.util.List;
@@ -30,6 +34,10 @@ public class WraithFaceService extends BaseFaceService {
       final float centerX = bounds.width() / 2F;
       final float centerY = bounds.height() / 2F;
 
+      if (calendarRingInfo != null) {
+        WraithRing.OUTER_RING.drawToCanvas(canvas, centerX, centerY, calendarRingInfo);
+      }
+
       final float seconds =
           calendar.get(Calendar.SECOND) + calendar.get(Calendar.MILLISECOND) / 1000F;
       final float minutes = calendar.get(Calendar.MINUTE) + seconds / 60F;
@@ -48,13 +56,16 @@ public class WraithFaceService extends BaseFaceService {
       }
     }
 
+    private IRingInfo calendarRingInfo;
+
+    @Override
     public void onCalendarEventsLoaded(List<Event> events) {
-      if (events != null) {
-        // TODO: Do the things with the events
+      if (events == null) {
+        return;
       }
-      if (isVisible()) {
-        updateHandler.sendEmptyMessageDelayed(MSG_LOAD_CALENDAR_EVENTS, 1000 * 60);
-      }
+      Log.e("WRAITH", events.size() + " calendar events obtained during refresh!");
+      calendarRingInfo = new RingInfo(events);
+      postInvalidate();
     }
   }
 }

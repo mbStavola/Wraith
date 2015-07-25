@@ -11,22 +11,19 @@ import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
+import com.kevinmost.wraith.event.Event;
 import com.kevinmost.wraith.hand.WraithHand;
 import com.kevinmost.wraith.task.LoadCalendarEventsTask;
 
 import java.util.Calendar;
+import java.util.List;
 import java.util.TimeZone;
 
 public abstract class BaseFaceService extends CanvasWatchFaceService {
   protected static final int MSG_UPDATE_TIME = 0;
   protected static final int MSG_LOAD_CALENDAR_EVENTS = 1;
 
-  @Override
-  public Engine onCreateEngine() {
-    return new Engine();
-  }
-
-  public class Engine extends CanvasWatchFaceService.Engine {
+  public abstract class Engine extends CanvasWatchFaceService.Engine {
     protected boolean isLowBitAmbient;
     protected boolean hasBurnInProtection;
 
@@ -34,24 +31,9 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
 
     protected Calendar calendar;
 
-    protected final Handler updateHandler = new Handler() {
-      @Override
-      public void handleMessage(Message msg) {
-        switch (msg.what) {
-          case MSG_UPDATE_TIME:
-            invalidate();
-            if (shouldTimerBeRunning()) {
-              sendEmptyMessageDelayed(MSG_UPDATE_TIME, 1000);
-            }
-            break;
-          case MSG_LOAD_CALENDAR_EVENTS:
-            loadCalendarEventsTask.cancel(true);
-            loadCalendarEventsTask = new LoadCalendarEventsTask(getApplicationContext());
-            loadCalendarEventsTask.execute();
-            break;
-        }
-      }
-    };
+    protected final Handler updateHandler = new UpdateHandler();
+
+    protected abstract void onCalendarEventsLoaded(List<Event> loadedEvents);
 
     private boolean isTimeZoneReceiverRegistered;
     private final BroadcastReceiver timeZoneReceiver = new BroadcastReceiver() {
@@ -68,8 +50,8 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
 
       setWatchFaceStyle(
           new WatchFaceStyle.Builder(BaseFaceService.this)
-              .setCardPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
-              .setAmbientPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
+              .setCardPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
+              .setAmbientPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
               .setShowUnreadCountIndicator(true)
               .setShowSystemUiTime(false)
               .setStatusBarGravity(Gravity.CENTER_VERTICAL)
@@ -114,10 +96,19 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
       if (visible) {
         registerReceiver();
         calendar.setTimeZone(TimeZone.getDefault());
+        updateHandler.sendEmptyMessage(MSG_LOAD_CALENDAR_EVENTS);
       } else {
         unregisterReceiver();
+        updateHandler.removeMessages(MSG_LOAD_CALENDAR_EVENTS);
+        loadCalendarEventsCancel();
       }
       updateTimer();
+    }
+
+    private void loadCalendarEventsCancel() {
+      if (loadCalendarEventsTask != null) {
+        loadCalendarEventsTask.cancel(true);
+      }
     }
 
     private void updateTimer() {
@@ -146,6 +137,40 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
       }
       isTimeZoneReceiverRegistered = false;
       BaseFaceService.this.unregisterReceiver(timeZoneReceiver);
+    }
+
+    private class UpdateHandler extends Handler {
+      @Override
+      public void handleMessage(Message msg) {
+        switch (msg.what) {
+          case MSG_UPDATE_TIME:
+            invalidate();
+            if (shouldTimerBeRunning()) {
+              sendEmptyMessageDelayed(MSG_UPDATE_TIME, 1000);
+            }
+            break;
+          case MSG_LOAD_CALENDAR_EVENTS:
+            loadCalendarEventsCancel();
+            loadCalendarEventsTask = new LoadCalendarEventsTask(getApplicationContext()) {
+              @Override
+              protected List<Event> doInBackground(Void... voids) {
+                final List<Event> events = super.doInBackground(voids);
+                onCalendarEventsLoaded(events);
+                return events;
+              }
+
+              @Override
+              protected void onPostExecute(List<Event> events) {
+                super.onPostExecute(events);
+                if (isVisible()) {
+                  updateHandler.sendEmptyMessageDelayed(MSG_LOAD_CALENDAR_EVENTS, 1000 * 60);
+                }
+              }
+            };
+            loadCalendarEventsTask.execute();
+            break;
+        }
+      }
     }
   }
 }

@@ -4,12 +4,14 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import com.kevinmost.wraith.event.Event;
 import com.kevinmost.wraith.event.IRingInfo;
+import org.joda.time.DateTime;
+import org.joda.time.Duration;
 
 public enum WraithRing implements IWraithRing {
   OUTER_RING(100) {
     @Override
     protected Paint vendPaint() {
-      final Paint paint = new Paint(BASE_PAINT);
+      final Paint paint = vendPaintWithSaneDefaults();
       paint.setARGB(255, 255, 179, 71);
       return paint;
     }
@@ -17,22 +19,12 @@ public enum WraithRing implements IWraithRing {
   INNER_RING(70) {
     @Override
     protected Paint vendPaint() {
-      final Paint paint = new Paint(BASE_PAINT);
+      final Paint paint = vendPaintWithSaneDefaults();
       paint.setARGB(255, 255, 179, 71);
       return paint;
     }
   },
   ;
-
-  private static final Paint BASE_PAINT;
-
-  static {
-    BASE_PAINT = new Paint();
-    BASE_PAINT.setStyle(Paint.Style.STROKE);
-    BASE_PAINT.setAntiAlias(true);
-    BASE_PAINT.setStrokeWidth(20);
-    BASE_PAINT.setStrokeCap(Paint.Cap.ROUND);
-  }
 
   private final int ringRadius;
   private final Paint paint;
@@ -54,18 +46,14 @@ public enum WraithRing implements IWraithRing {
   public final void drawToCanvas(Canvas canvas, float centerX, float centerY,
       IRingInfo ringInfo) {
     for (Event event : ringInfo.getEvents()) {
-      final long start = event.start;
-      final long end = event.end;
+      final DateTime start = event.interval.getStart();
+      final float startHours = start.getMinuteOfDay() / 60F;
 
-      long length = end - start;
-      // The length of the event could look like it's negative if the event goes from, say, 11PM
-      // to 1AM. 1 - 23 = -22, so add 24 so it's a proper 2-hour-long event.
-      if (length < 0) {
-        length += 24;
-      }
+      final Duration duration = event.interval.toDuration();
+      final float durationInHours = duration.getStandardMinutes() / 60F;
 
-      final float arcStartPos = start * 30 - 90; // - 90 because on the canvas, 0 is at 3 o'clock.
-      final float arcSweep = length * 30;
+      final float arcStartPos = oClockCoordToDrawableFloat(startHours);
+      final float arcSweep = durationInHours * 30;
 
       canvas.drawArc(
           centerX - ringRadius, centerY - ringRadius,
@@ -73,5 +61,19 @@ public enum WraithRing implements IWraithRing {
           arcStartPos, arcSweep,
           false, paint);
     }
+  }
+
+  private static Paint vendPaintWithSaneDefaults() {
+    final Paint paint = new Paint();
+    paint.setStyle(Paint.Style.STROKE);
+    paint.setAntiAlias(true);
+    paint.setStrokeWidth(20);
+    paint.setStrokeCap(Paint.Cap.BUTT);
+    return paint;
+  }
+
+  private static float oClockCoordToDrawableFloat(float oClock) {
+    // minus 90 because on the canvas, 0 is at 3 o'clock.
+    return oClock * 30 - 90;
   }
 }
