@@ -35,7 +35,7 @@ public enum WraithHand implements IWraithHand {
   }
   ;
 
-  private static final float TWO_PI = ((float) (2 * Math.PI));
+  private static final float TAU = ((float) (2 * Math.PI));
 
   private final Paint paint;
   private final int numberOfUnits;
