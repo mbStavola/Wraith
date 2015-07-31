@@ -1,6 +1,7 @@
 package com.kevinmost.wraith;
 
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.util.Log;
@@ -22,6 +23,8 @@ public class WraithFaceService extends BaseFaceService {
 
   class Engine extends BaseFaceService.Engine {
 
+    private final int colorMonokaiBlack = getResources().getColor(R.color.monokai_black);
+
     private IRingInfo calendarRingInfo;
 
     @Override
@@ -29,7 +32,7 @@ public class WraithFaceService extends BaseFaceService {
       super.onDraw(canvas, bounds);
 
       // Erase the canvas' last state
-      canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+      canvas.drawColor(colorMonokaiBlack);
 
       drawWatchTicks(canvas);
 
@@ -59,15 +62,29 @@ public class WraithFaceService extends BaseFaceService {
 
     private void drawWatchTicks(Canvas canvas) {
       for (int i = 0; i < 60; i++) {
+
+        final Paint paint;
+        final float tickDistanceFromEdge;
+        if (i % 15 == 0) {
+          paint = Paints.PAINT_FACE_MAJOR_TICKS;
+          tickDistanceFromEdge = 30;
+        } else if (i % 5 == 0) {
+          paint = Paints.PAINT_FACE_TICKS;
+          tickDistanceFromEdge = 15;
+        } else {
+          paint = Paints.PAINT_FACE_TICKS;
+          tickDistanceFromEdge = 5;
+        }
+
         final float angle = WraithHand.TWO_PI * i / 60;
-        final float angleSin = (float) Math.sin(angle);
-        final float angleCos = (float) Math.cos(angle);
-        final float tickLength = (i % 5 == 0) ? 15 : 30;
-        canvas.drawLine(
-            WatchParams.centerX + (angleSin * tickLength), WatchParams.centerY + (-angleCos * tickLength),
-            WatchParams.centerX + (angleSin * WatchParams.centerX), WatchParams.centerY + (-angleCos * WatchParams.centerY),
-            Paints.PAINT_FACE_TICKS
-        );
+        final float unitOffsetX = (float) Math.sin(angle);
+        final float unitOffsetY = (float) -Math.cos(angle);
+        final float tickDistance1 = WatchParams.centerX - tickDistanceFromEdge;
+        final float x1 = WatchParams.centerX + (unitOffsetX * tickDistance1);
+        final float y1 = WatchParams.centerY + (unitOffsetY * tickDistance1);
+        final float x2 = WatchParams.centerX + (unitOffsetX * WatchParams.centerX);
+        final float y2 = WatchParams.centerY + (unitOffsetY * WatchParams.centerY);
+        canvas.drawLine(x1, y1, x2, y2, paint);
       }
     }
 

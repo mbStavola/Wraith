@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="monokai_black">#272822</color>
+  <color name="monokai_magenta">#F92672</color>
+  <color name="monokai_blue">#66F9EF</color>
+  <color name="monokai_green">#A6E22E</color>
+  <color name="monokai_orange">#FD971F</color>
+</resources>
