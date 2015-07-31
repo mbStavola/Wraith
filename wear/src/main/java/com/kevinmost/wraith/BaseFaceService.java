@@ -27,15 +27,12 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
     protected boolean isLowBitAmbient;
     protected boolean hasBurnInProtection;
 
-    private LoadCalendarEventsTask loadCalendarEventsTask;
-
     protected Calendar calendar;
 
-    protected final Handler updateHandler = new UpdateHandler();
-
-    protected abstract void onCalendarEventsLoaded(List<Event> loadedEvents);
-
+    private LoadCalendarEventsTask loadCalendarEventsTask;
     private boolean isTimeZoneReceiverRegistered;
+
+    private final Handler updateHandler = new UpdateHandler();
     private final BroadcastReceiver timeZoneReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
@@ -43,18 +40,17 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
         invalidate();
       }
     };
-
     @Override
     public void onCreate(SurfaceHolder holder) {
       super.onCreate(holder);
 
       setWatchFaceStyle(
           new WatchFaceStyle.Builder(BaseFaceService.this)
-              .setCardPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
-              .setAmbientPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
+              .setCardPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
+              .setAmbientPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
               .setShowUnreadCountIndicator(true)
               .setShowSystemUiTime(false)
-              .setStatusBarGravity(Gravity.CENTER_VERTICAL)
+              .setStatusBarGravity(Gravity.TOP)
               .setHotwordIndicatorGravity(Gravity.TOP)
               .setViewProtectionMode(
                   WatchFaceStyle.PROTECT_STATUS_BAR | WatchFaceStyle.PROTECT_HOTWORD_INDICATOR)
@@ -62,6 +58,17 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
       );
 
       calendar = Calendar.getInstance();
+    }
+
+    @Override
+    public void onSurfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+      super.onSurfaceChanged(holder, format, width, height);
+      // Cache these values when the dimensions change (shouldn't be often) instead of calculating
+      // them every frame
+      WatchParams.width = width;
+      WatchParams.height = height;
+      WatchParams.centerX = width / 2F;
+      WatchParams.centerY = height / 2F;
     }
 
     @Override
@@ -138,6 +145,8 @@ public abstract class BaseFaceService extends CanvasWatchFaceService {
       isTimeZoneReceiverRegistered = false;
       BaseFaceService.this.unregisterReceiver(timeZoneReceiver);
     }
+
+    protected abstract void onCalendarEventsLoaded(List<Event> loadedEvents);
 
     private class UpdateHandler extends Handler {
       @Override

@@ -2,6 +2,7 @@ package com.kevinmost.wraith.ring;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import com.kevinmost.wraith.WatchParams;
 import com.kevinmost.wraith.event.Event;
 import com.kevinmost.wraith.event.IRingInfo;
 import org.joda.time.DateTime;
@@ -38,13 +39,10 @@ public enum WraithRing implements IWraithRing {
 
   /**
    * @param canvas The canvas from your onDraw() method.
-   * @param centerX The center x coord of this watch-face.
-   * @param centerY The center y coord of this watch-face.
    * @param ringInfo The information to draw into this ring.
    */
   @Override
-  public final void drawToCanvas(Canvas canvas, float centerX, float centerY,
-      IRingInfo ringInfo) {
+  public final void drawToCanvas(Canvas canvas, IRingInfo ringInfo) {
     for (Event event : ringInfo.getEvents()) {
       final DateTime start = event.interval.getStart();
       final float startHours = start.getMinuteOfDay() / 60F;
@@ -56,8 +54,8 @@ public enum WraithRing implements IWraithRing {
       final float arcSweep = durationInHours * 30;
 
       canvas.drawArc(
-          centerX - ringRadius, centerY - ringRadius,
-          centerX + ringRadius, centerY + ringRadius,
+          WatchParams.centerX - ringRadius, WatchParams.centerY - ringRadius,
+          WatchParams.centerX + ringRadius, WatchParams.centerY + ringRadius,
           arcStartPos, arcSweep,
           false, paint);
     }
