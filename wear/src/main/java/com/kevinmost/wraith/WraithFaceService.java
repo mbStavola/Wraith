@@ -76,7 +76,7 @@ public class WraithFaceService extends BaseFaceService {
           tickDistanceFromEdge = 5;
         }
 
-        final float angle = WraithHand.TWO_PI * i / 60;
+        final float angle = WraithHand.TAU * i / 60;
         final float unitOffsetX = (float) Math.sin(angle);
         final float unitOffsetY = (float) -Math.cos(angle);
         final float tickDistance1 = WatchParams.centerX - tickDistanceFromEdge;
