@@ -11,7 +11,7 @@ public enum WraithHand implements IWraithHand {
   SECOND(Paints.PAINT_HAND_SECOND, 60, 10, true)
   ;
 
-  public static final float TWO_PI = ((float) (2 * Math.PI));
+  public static final float TAU = ((float) (2 * Math.PI));
 
   private final Paint paint;
   private final int numberOfUnits;
